@@ -1,0 +1,10 @@
+pipecat-ai[silero,openai,deepgram,fastapi,websockets]==0.0.108
+faster-whisper==1.2.1
+aiohttp>=3.11.12,<4
+numpy>=1.26,<3
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30,<1
+python-dotenv>=1.0,<2
+openai>=1.51,<2
+loguru>=0.7,<1
+scipy>=1.14,<2

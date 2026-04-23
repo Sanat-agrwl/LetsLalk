@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinServ Collection Agent</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+    }
+
+    .card {
+      background: #1a1d27;
+      border: 1px solid #2d3148;
+      border-radius: 1.5rem;
+      padding: 2.5rem 3rem;
+      max-width: 560px;
+      width: 90%;
+      text-align: center;
+    }
+
+    h1 { font-size: 1.5rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
+    .subtitle { font-size: 0.9rem; color: #6b7280; margin-bottom: 2rem; }
+
+    /* Status pill */
+    #status {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2rem;
+      background: #1f2335;
+      color: #6b7280;
+      border: 1px solid #2d3148;
+      transition: all 0.3s;
+    }
+    #status.connected   { background: #0d2b1e; color: #34d399; border-color: #34d399; }
+    #status.speaking    { background: #1e1b2e; color: #a78bfa; border-color: #a78bfa; }
+    #status.listening   { background: #1a2638; color: #60a5fa; border-color: #60a5fa; }
+    #status.error       { background: #2b0d0d; color: #f87171; border-color: #f87171; }
+
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 1.4s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    /* Main button */
+    #callBtn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.75rem;
+      padding: 1rem 2.5rem;
+      font-size: 1.1rem; font-weight: 700;
+      border: none; border-radius: 9999px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+    }
+    #callBtn.start {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #fff;
+      box-shadow: 0 0 24px rgba(34,197,94,0.35);
+    }
+    #callBtn.start:hover {
+      transform: scale(1.04);
+      box-shadow: 0 0 36px rgba(34,197,94,0.5);
+    }
+    #callBtn.end {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: #fff;
+      box-shadow: 0 0 24px rgba(239,68,68,0.35);
+    }
+    #callBtn.end:hover { transform: scale(1.04); }
+    #callBtn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* Transcript */
+    #transcript {
+      margin-top: 2rem;
+      max-height: 260px;
+      overflow-y: auto;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .msg {
+      padding: 0.6rem 0.9rem;
+      border-radius: 0.8rem;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      max-width: 88%;
+    }
+    .msg.user {
+      background: #1f2d44;
+      color: #93c5fd;
+      align-self: flex-end;
+      border-bottom-right-radius: 0.2rem;
+    }
+    .msg.agent {
+      background: #1f2b1f;
+      color: #86efac;
+      align-self: flex-start;
+      border-bottom-left-radius: 0.2rem;
+    }
+    .msg .label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      opacity: 0.6;
+      margin-bottom: 0.2rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Volume bar */
+    #volBar {
+      height: 4px;
+      background: #2d3148;
+      border-radius: 9999px;
+      margin-top: 1.5rem;
+      overflow: hidden;
+    }
+    #volFill {
+      height: 100%;
+      width: 0%;
+      background: #60a5fa;
+      border-radius: 9999px;
+      transition: width 0.08s;
+    }
+
+    .info { font-size: 0.75rem; color: #4b5563; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>FinServ Collection Agent</h1>
+    <p class="subtitle">Hinglish · ₹50,000 Loan Recovery Demo</p>
+
+    <div id="status"><span class="dot"></span><span id="statusText">Ready</span></div>
+
+    <button id="callBtn" class="start" onclick="toggleCall()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24 11.47 11.47 0 003.58.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1 11.47 11.47 0 00.57 3.58 1 1 0 01-.25 1.01z"/>
+      </svg>
+      <span id="btnText">Start Call</span>
+    </button>
+
+    <div id="volBar"><div id="volFill"></div></div>
+
+    <div id="transcript"></div>
+    <p class="info" id="hint">Click <strong>Start Call</strong> — browser will ask for microphone access.</p>
+  </div>
+
+<script>
+// ── state ──────────────────────────────────────────────────────────────────────
+let ws = null;
+let audioCtx = null;
+let mediaStream = null;
+let scriptProcessor = null;
+let playbackTime = 0;
+let active = false;
+
+const TARGET_SR = 16000;
+
+// ── UI helpers ─────────────────────────────────────────────────────────────────
+function setStatus(label, cls) {
+  const el = document.getElementById('status');
+  el.className = cls;
+  document.getElementById('statusText').textContent = label;
+}
+function setVolume(v) {
+  document.getElementById('volFill').style.width = Math.min(v * 300, 100) + '%';
+}
+function addMessage(role, text) {
+  const t = document.getElementById('transcript');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.innerHTML = `<div class="label">${role === 'user' ? 'You' : 'Agent (Priya)'}</div>${escHtml(text)}`;
+  t.appendChild(div);
+  t.scrollTop = t.scrollHeight;
+}
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── main toggle ────────────────────────────────────────────────────────────────
+async function toggleCall() {
+  if (!active) await startCall();
+  else endCall();
+}
+
+async function startCall() {
+  const btn = document.getElementById('callBtn');
+  btn.disabled = true;
+  setStatus('Connecting …', '');
+
+  try {
+    // 1. Mic access — requires secure context (https or localhost)
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error('Microphone not available. Open this page at http://localhost:8765 (not via IP address).');
+    }
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+
+    // 2. Audio context at target sample rate (16 kHz)
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: TARGET_SR });
+    playbackTime = audioCtx.currentTime;
+
+    // 3. Script processor — captures mic and sends to server
+    const source = audioCtx.createMediaStreamSource(mediaStream);
+    scriptProcessor = audioCtx.createScriptProcessor(4096, 1, 1);
+    source.connect(scriptProcessor);
+    // connect to destination is required (even silent) so onaudioprocess fires
+    scriptProcessor.connect(audioCtx.destination);
+
+    scriptProcessor.onaudioprocess = (e) => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      const f32 = e.inputBuffer.getChannelData(0);
+
+      // volume meter
+      let sum = 0;
+      for (let i = 0; i < f32.length; i++) sum += f32[i] * f32[i];
+      setVolume(Math.sqrt(sum / f32.length));
+
+      // float32 → int16 PCM
+      const i16 = new Int16Array(f32.length);
+      for (let i = 0; i < f32.length; i++)
+        i16[i] = Math.max(-32768, Math.min(32767, f32[i] * 32768));
+      ws.send(i16.buffer);
+    };
+
+    // 4. WebSocket
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    ws = new WebSocket(`${proto}://${location.host}/ws`);
+    ws.binaryType = 'arraybuffer';
+
+    ws.onopen = () => {
+      active = true;
+      btn.disabled = false;
+      btn.className = 'end';
+      document.getElementById('btnText').textContent = 'End Call';
+      document.getElementById('hint').textContent = 'Speak naturally — Hinglish is fine!';
+      setStatus('Connected', 'connected');
+    };
+
+    ws.onclose = () => {
+      if (active) endCall(false);
+      setStatus('Call ended', '');
+    };
+
+    ws.onerror = () => setStatus('Connection error', 'error');
+
+    // Server sends JSON events or raw binary audio
+    ws.onmessage = (evt) => {
+      if (typeof evt.data === 'string') {
+        handleJsonEvent(JSON.parse(evt.data));
+      } else if (evt.data instanceof ArrayBuffer) {
+        playPcmChunk(evt.data);
+        setStatus('Agent speaking', 'speaking');
+      }
+    };
+
+  } catch (err) {
+    console.error(err);
+    setStatus('Error: ' + err.message, 'error');
+    btn.disabled = false;
+  }
+}
+
+function endCall(closeWs = true) {
+  active = false;
+  if (closeWs && ws) ws.close();
+  if (scriptProcessor) { scriptProcessor.disconnect(); scriptProcessor = null; }
+  if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+  if (audioCtx) { audioCtx.close(); audioCtx = null; }
+  ws = null;
+
+  const btn = document.getElementById('callBtn');
+  btn.className = 'start';
+  btn.disabled = false;
+  document.getElementById('btnText').textContent = 'Start Call';
+  document.getElementById('hint').textContent = 'Click Start Call to connect again.';
+  setStatus('Ready', '');
+  setVolume(0);
+}
+
+// ── audio playback ─────────────────────────────────────────────────────────────
+function playPcmChunk(arrayBuffer) {
+  if (!audioCtx) return;
+  const i16 = new Int16Array(arrayBuffer);
+  if (i16.length === 0) return;
+
+  const f32 = new Float32Array(i16.length);
+  for (let i = 0; i < i16.length; i++) f32[i] = i16[i] / 32768;
+
+  const buf = audioCtx.createBuffer(1, f32.length, TARGET_SR);
+  buf.getChannelData(0).set(f32);
+
+  const src = audioCtx.createBufferSource();
+  src.buffer = buf;
+  src.connect(audioCtx.destination);
+
+  const now = audioCtx.currentTime;
+  if (playbackTime < now) playbackTime = now + 0.02; // small guard gap
+  src.start(playbackTime);
+  playbackTime += buf.duration;
+}
+
+// ── server events ──────────────────────────────────────────────────────────────
+function handleJsonEvent(evt) {
+  switch (evt.type) {
+    case 'transcription':
+      addMessage('user', evt.text);
+      setStatus('Listening', 'listening');
+      break;
+    case 'llm_response':
+      addMessage('agent', evt.text);
+      break;
+    case 'user_started_speaking':
+      setStatus('Listening …', 'listening');
+      playbackTime = audioCtx ? audioCtx.currentTime : 0; // interrupt playback
+      break;
+    case 'user_stopped_speaking':
+      setStatus('Processing …', '');
+      break;
+  }
+}
+</script>
+</body>
+</html>

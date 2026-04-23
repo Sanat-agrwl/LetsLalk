@@ -1,0 +1,23 @@
+services:
+  agent:
+    build:
+      context: .
+      args:
+        WHISPER_MODEL: ${WHISPER_MODEL:-small}
+    ports:
+      - "8765:8765"
+    env_file:
+      - .env
+    environment:
+      - WHISPER_MODEL=${WHISPER_MODEL:-small}
+    volumes:
+      - ./recordings:/app/recordings
+    restart: unless-stopped
+    # Optional: GPU support (comment out if no NVIDIA GPU available)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]

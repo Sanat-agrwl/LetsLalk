@@ -1,0 +1,44 @@
+# Claude Code internals
+.claude/
+
+# secrets
+.env
+*.key
+
+# recordings & demo artifacts (large binary files)
+recordings/
+*.wav
+*.mp4
+*.mov
+logs/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# pytest / cache
+.pytest_cache/
+.mypy_cache/
+*.cover
+.coverage
+htmlcov/
+
+# docker build artifacts
+.docker/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
