@@ -73,6 +73,11 @@ def _parse_number_at(tokens: list[str], start: int) -> tuple[int | None, int]:
 
         elif tok in _MULTIPLIERS:
             mult = _MULTIPLIERS[tok]
+            # Cross-lingual multipliers (thousand/million) only fire when a
+            # Hindi ones-word preceded them; prevents bare "thousand" converting
+            # when the leading word is English (e.g. "fifty thousand").
+            if tok in ("thousand", "million") and current == 0 and total == 0:
+                break
             if mult == 100:
                 current = (current or 1) * 100
             else:

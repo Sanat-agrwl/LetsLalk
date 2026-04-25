@@ -25,7 +25,7 @@ import os
 
 _SARVAM_TTS_URL = "https://api.sarvam.ai/text-to-speech"
 _SAMPLE_RATE = 16_000
-_SARVAM_MODEL = os.getenv("SARVAM_MODEL", "bulbul:v1")
+_SARVAM_MODEL = os.getenv("SARVAM_MODEL", "bulbul:v3")
 
 # Valid Sarvam AI speakers (as of April 2026)
 SARVAM_SPEAKERS = [
